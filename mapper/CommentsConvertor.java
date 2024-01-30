@@ -1,6 +1,6 @@
 package effectivemobile.taskmanagementsystem.mapper;
 
-import effectivemobile.taskmanagementsystem.dto.comments.Comments;
+import effectivemobile.taskmanagementsystem.dto.comment.Comment;
 import effectivemobile.taskmanagementsystem.entity.CommentsEntity;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
@@ -8,15 +8,14 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class CommentsConvertor {
-    private ModelMapper modelMapper = new ModelMapper();
+    private final ModelMapper modelMapper = new ModelMapper();
 
-    public CommentsEntity convertToEntity(Comments comments) {
+    public CommentsEntity convertToEntity(Comment comment) {
         configureModelMapper();
-        if (comments == null) {
+        if (comment == null) {
             return null;
         }
-        CommentsEntity commentsEntity = modelMapper.map(comments, CommentsEntity.class);
-        return commentsEntity;
+        return modelMapper.map(comment, CommentsEntity.class);
     }
     private void configureModelMapper () {
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.LOOSE);

@@ -1,9 +1,14 @@
 package effectivemobile.taskmanagementsystem.dto.task;
 
 public enum StatusOfTask {
-    EXPECTATION,
-    IN_PROCESS,
-    COMPLETE
+    EXPECTATION("expectation"),
+    IN_PROCESS("in process"),
+    COMPLETE("complete");
+
+    public final String value;
+    StatusOfTask (String value) {
+        this.value = value;
+    }
 
 
 }

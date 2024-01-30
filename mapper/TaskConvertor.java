@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class TaskConvertor {
-    private ModelMapper modelMapper = new ModelMapper();
+    private final ModelMapper modelMapper = new ModelMapper();
 
 
     public Task convertToDto(TaskEntity taskEntity) {
@@ -16,8 +16,7 @@ public class TaskConvertor {
         if (taskEntity == null) {
             return null;
         }
-        Task taskDto = modelMapper.map(taskEntity, Task.class);
-        return taskDto;
+        return modelMapper.map(taskEntity, Task.class);
     }
 
     public TaskEntity convertToEntity(Task task) {
@@ -25,8 +24,7 @@ public class TaskConvertor {
         if (task == null) {
             return null;
         }
-        TaskEntity taskEntity = modelMapper.map(task, TaskEntity.class);
-        return taskEntity;
+        return modelMapper.map(task, TaskEntity.class);
     }
 
     private void configureModelMapper () {

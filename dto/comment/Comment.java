@@ -1,11 +1,11 @@
-package effectivemobile.taskmanagementsystem.dto.comments;
+package effectivemobile.taskmanagementsystem.dto.comment;
 
 import lombok.Data;
 
 import java.util.Objects;
 
 @Data
-public class Comments {
+public class Comment {
     private Integer id;
     private String comments;
 
@@ -13,8 +13,8 @@ public class Comments {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Comments comments1 = (Comments) o;
-        return Objects.equals(id, comments1.id) && Objects.equals(comments, comments1.comments);
+        Comment comment1 = (Comment) o;
+        return Objects.equals(id, comment1.id) && Objects.equals(comments, comment1.comments);
     }
 
     @Override

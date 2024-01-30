@@ -1,73 +1,132 @@
 package effectivemobile.taskmanagementsystem.service.impl;
 
-import effectivemobile.taskmanagementsystem.dto.comments.Comments;
+
+import effectivemobile.taskmanagementsystem.dto.task.Priority;
+import effectivemobile.taskmanagementsystem.dto.task.StatusOfTask;
 import effectivemobile.taskmanagementsystem.dto.task.Task;
 import effectivemobile.taskmanagementsystem.entity.CommentsEntity;
 import effectivemobile.taskmanagementsystem.entity.TaskEntity;
+import effectivemobile.taskmanagementsystem.entity.UserEntity;
+import effectivemobile.taskmanagementsystem.exeptions.IdNotFoundExeption;
 import effectivemobile.taskmanagementsystem.exeptions.NameDuplicateExeption;
-import effectivemobile.taskmanagementsystem.mapper.CommentsConvertor;
-import effectivemobile.taskmanagementsystem.mapper.TaskConvertor;
-import effectivemobile.taskmanagementsystem.repository.CommentRepo;
-import effectivemobile.taskmanagementsystem.repository.TaskRepo;
-import effectivemobile.taskmanagementsystem.service.TaskService;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import effectivemobile.taskmanagementsystem.mapper.TaskConvertor;
+import effectivemobile.taskmanagementsystem.service.repository.TaskRepo;
+import effectivemobile.taskmanagementsystem.service.TaskService;
+import effectivemobile.taskmanagementsystem.service.repository.UserRepo;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class TaskServiceImpl implements TaskService {
     private final TaskRepo taskRepo;
+    private final UserRepo userRepo;
+    private final UserServiceImpl userService;
     private final TaskConvertor taskConvertor;
-    private final CommentsConvertor commentsConvertor;
-    private final CommentRepo commentRepo;
+    private static final Logger logger = LoggerFactory.getLogger(TaskServiceImpl.class);
 
-    public TaskServiceImpl(TaskRepo taskRepo, TaskConvertor taskConvertor, CommentsConvertor commentsConvertor, CommentRepo commentRepo) {
-        this.taskRepo = taskRepo;
-        this.taskConvertor = taskConvertor;
-        this.commentsConvertor = commentsConvertor;
-        this.commentRepo = commentRepo;
-    }
 
     @Transactional
     @Override
-    public void createTask(Task task) {
-
-        if (taskRepo.existsByName(task.getName())) {
+    public TaskEntity createTask(Task taskDto) {
+        validateInput(taskDto);
+        if (taskRepo.existsByName(taskDto.getName())) {
             throw new NameDuplicateExeption("name of task is used");
         }
+        Task task = Task.builder()
+                .description(taskDto.getDescription())
+                .statusOfTask(taskDto.getStatusOfTask())
+                .priority(taskDto.getPriority())
+                .name(taskDto.getName())
+                .build();
         TaskEntity entity = taskConvertor.convertToEntity(task);
+        String user = userService.getUser();
+        UserEntity userEntity = userRepo.findUserByEmail(user);
+        entity.setUser(userEntity);
         taskRepo.save(entity);
+        return entity;
     }
 
     @Transactional
     @Override
-    public void updateTask(Integer id, Task task) {
-        Optional<TaskEntity> entityById = taskRepo.findById(id);
-        if (entityById.isPresent()) {
-            TaskEntity entity = entityById.get();
-            entity.setName(task.getName());
-            entity.setStatusOfTask(task.getStatusOfTask());
-            entity.setPriority(task.getPriority());
-            taskRepo.save(entity);
+    public TaskEntity updateTask(Integer id, Task task) throws IdNotFoundExeption {
+        logger.info("task data "+ task);
+        TaskEntity taskEntity = taskRepo.findTaskEntityById(id);
+        validateInput(task);
+        logger.info("find task by id " + id);
+        if (taskEntity != null) {
+            taskEntity.setStatusOfTask(task.getStatusOfTask());
+            taskEntity.setPriority(task.getPriority());
+            taskEntity.setName(task.getName());
+            taskEntity.setDescription(task.getDescription());
+            logger.info("saving completed");
+            return taskRepo.save(taskEntity);
+        } else {
+            throw new IdNotFoundExeption("id not found");
         }
-        throw new EntityNotFoundException("id not found");
 
     }
 
-    @Transactional
-    public void addComment(Integer id, String comments) {
-        Optional<TaskEntity> entityById = taskRepo.findById(id);
-        if (entityById.isPresent()) {
-            Comments comment = new Comments();
-            comment.setComments(comments);
-            CommentsEntity commentsEntity = commentsConvertor.convertToEntity(comment);
-            TaskEntity taskEntity = entityById.get();
-            taskEntity.getCommentsEntityList().add(commentsEntity);
-            commentsEntity.setTask(taskEntity);
-            taskRepo.save(taskEntity);
+    public void deleteTask(Integer id) throws IdNotFoundExeption {
+        TaskEntity task = taskRepo.findTaskEntityById(id);
+        if (task != null) {
+            taskRepo.delete(task);
+            logger.info("task was deletet with id "+ id);
+        } else {
+            throw new IdNotFoundExeption("id not found");
         }
-        throw new EntityNotFoundException("id not found");
+    }
+
+    public void appointAnExecutor(String name, Integer taskId) {
+        TaskEntity entity = taskRepo.findTaskEntityById(taskId);
+        if (entity != null) {
+            entity.setExecutor(name);
+        }
+    }
+
+    public List<TaskEntity> getAllTasks() {
+        return taskRepo.findAll();
+    }
+
+
+    public void addComment(Integer taskId, String comment) throws IdNotFoundExeption {
+        TaskEntity entity = taskRepo.findTaskEntityById(taskId);
+        if (entity != null) {
+            String user = userService.getUser();
+            UserEntity userEntity = userRepo.findUserByEmail(user);
+            userEntity.setEmail(user);
+            entity.setId(taskId);
+            CommentsEntity comments = new CommentsEntity();
+            comments.setComment(comment);
+            comments.setUser(userEntity);
+            comments.setTask(entity);
+            entity.getCommentsEntityList().add(comments);
+            taskRepo.save(entity);
+            logger.info("comment saved "+ comment);
+        } else {
+            throw new IdNotFoundExeption("id not found");
+        }
+    }
+
+    private static void validateInput(Task task) {
+        if (task == null) {
+            throw new IllegalArgumentException("task is null");
+        }
+        if (!task.getPriority().equals(Priority.valueOf(task.getPriority().name()))) {
+            throw new IllegalArgumentException("select one of the options " + Priority.HIGH_PRIORITY
+                    + Priority.MEDIUM_PRIORITY
+                    + Priority.LOW_PRIORITY);
+        }
+        if (!task.getStatusOfTask().equals(StatusOfTask.valueOf(task.getStatusOfTask().name()))) {
+            throw new IllegalArgumentException("select one of the options " + StatusOfTask.COMPLETE
+                    + StatusOfTask.EXPECTATION
+                    + StatusOfTask.IN_PROCESS);
+        }
     }
 }

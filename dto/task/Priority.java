@@ -1,7 +1,12 @@
 package effectivemobile.taskmanagementsystem.dto.task;
 
 public enum Priority {
-    LOW_PRIORITY,
-    MEDIUM_PRIORITY,
-    HIGH_PRIORITY
+    LOW_PRIORITY("low"),
+    MEDIUM_PRIORITY("medium"),
+    HIGH_PRIORITY("high");
+
+    public final String value;
+    Priority(String value) {
+        this.value = value;
+    }
 }

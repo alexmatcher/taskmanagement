@@ -1,14 +1,17 @@
 package effectivemobile.taskmanagementsystem.service;
 
-import effectivemobile.taskmanagementsystem.dto.comments.Comments;
 import effectivemobile.taskmanagementsystem.dto.task.Task;
+import effectivemobile.taskmanagementsystem.entity.TaskEntity;
+import effectivemobile.taskmanagementsystem.exeptions.IdNotFoundExeption;
 import effectivemobile.taskmanagementsystem.exeptions.NameDuplicateExeption;
 import jakarta.persistence.EntityNotFoundException;
 
+
+
 public interface TaskService {
-    void createTask(Task task) throws NameDuplicateExeption;
+    TaskEntity createTask(Task task) throws NameDuplicateExeption;
 
-    void updateTask(Integer id,Task task) throws EntityNotFoundException;
+    TaskEntity updateTask(Integer id,Task task) throws EntityNotFoundException, IdNotFoundExeption;
 
-    void addComment(Integer id, String comments);
+    void addComment(Integer taskId, String comments) throws IdNotFoundExeption;
 }

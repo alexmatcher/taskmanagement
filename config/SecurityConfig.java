@@ -1,42 +1,63 @@
 package effectivemobile.taskmanagementsystem.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import effectivemobile.taskmanagementsystem.filter.JwtAuthFIlter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig  {
-    @Autowired
-    private UserDetailsService userDetailsService;
+@RequiredArgsConstructor
+public class SecurityConfig {
 
+    private final JwtAuthFIlter jwtAuthFIlter;
+    private final AuthenticationProvider provider;
+
+    private static final String[] AUTH_WHITELIST = {
+            "/login",
+            "/register",
+            "/authenticate",
+            "/v2/api-docs",
+            "/swagger-resources/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/webjars/**",
+            "/v3/api-docs",
+            "/v3/api-docs/**",
+            "swagger-ui/#/",
+            "/swagger-ui.html"
+    };
 
     @Bean
-    public AuthenticationManager authenticationManager(UserDetailsService userDetails, PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-        daoAuthenticationProvider.setUserDetailsService(userDetails);
-        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder);
-        return new ProviderManager(daoAuthenticationProvider);
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(
+                        authorization ->
+                                authorization
+                                        .requestMatchers(AUTH_WHITELIST)
+                                        .permitAll()
+                                        .anyRequest()
+                                        .permitAll())
+                .formLogin((login) -> login.loginPage("/login")
+                        .permitAll())
+                .logout(LogoutConfigurer::permitAll)
+                .cors(withDefaults())
+                .authenticationProvider(provider)
+                .addFilterBefore(jwtAuthFIlter, UsernamePasswordAuthenticationFilter.class)
+                .httpBasic(withDefaults());
+        return http.build();
     }
 
-    @Bean
-    public void configure(AuthenticationManagerBuilder managerBuilder) throws Exception {
-        managerBuilder.userDetailsService(userDetailsService);
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
 
 }

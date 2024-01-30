@@ -1,54 +1,79 @@
 package effectivemobile.taskmanagementsystem.service.impl;
 
-import effectivemobile.taskmanagementsystem.dto.auth.Register;
-import effectivemobile.taskmanagementsystem.dto.user.User;
+import effectivemobile.taskmanagementsystem.dto.user.UpdateUser;
 import effectivemobile.taskmanagementsystem.entity.UserEntity;
-import effectivemobile.taskmanagementsystem.exeptions.MailDuplicationExeption;
+import effectivemobile.taskmanagementsystem.exeptions.UserEmailNotFoundExeption;
 import effectivemobile.taskmanagementsystem.mapper.UserConvertor;
-import effectivemobile.taskmanagementsystem.repository.UserRepo;
+import effectivemobile.taskmanagementsystem.service.repository.UserRepo;
 import effectivemobile.taskmanagementsystem.service.UserService;
-import jakarta.transaction.Transactional;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepo userRepo;
-    private final PasswordEncoder passwordEncoder;
-
     private final UserConvertor userConvertor;
 
-    public UserServiceImpl(UserRepo userRepo, PasswordEncoder passwordEncoder, UserConvertor userConvertor) {
+    private final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+
+    public UserServiceImpl(UserRepo userRepo, UserConvertor userConvertor) {
         this.userRepo = userRepo;
-        this.passwordEncoder = passwordEncoder;
         this.userConvertor = userConvertor;
     }
 
 
     @Transactional
     @Override
-    public boolean registerUser(Register register)  {
-        if (userRepo.existsByEmail(register.getEmail())) {
-            throw new MailDuplicationExeption("mail is used");
+    public UpdateUser updateUserInfo(UpdateUser updateUser) {
+        UserEntity user = userRepo.findUserByEmail(updateUser.getEmail());
+        logger.info("User found by email: " + user);
+        if (user != null) {
+            user.setFirstName(updateUser.getFirstName());
+            user.setLastName(updateUser.getLastName());
+            userRepo.save(user);
+            logger.info("saving completed");
+            return updateUser;
+        } else {
+            logger.warn("User not found for email: " + updateUser.getEmail());
+            throw new UserEmailNotFoundExeption("mail not found");
         }
-        User user = new User();
-        user.setEmail(register.getEmail());
-        user.setPassword((passwordEncoder.encode(register.getPassword())));
-        UserEntity userEntity = userConvertor.converToEntity(user);
-        userRepo.save(userEntity);
-        return true;
+
+
     }
 
-    @Transactional
+    public List<String> getNamesOfAllUsers() {
+        List<UserEntity> list = userRepo.findAll();
+        return list.stream().map(UserEntity::getFirstName).collect(Collectors.toList());
+
+    }
+
+
+    public String getUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails user = (UserDetails) authentication.getPrincipal();
+       return user.getUsername();
+
+
+    }
+
     @Override
-    public void updateUserInfo(User user, Integer id) {
-        UserEntity entity = userRepo.findUserById(id);
-        user.setFirstName(entity.getFirstName());
-        user.setLastName(entity.getLastName());
-        UserEntity userEntity = userConvertor.converToEntity(user);
-        userRepo.save(userEntity);
+    public UserDetails loadUserByUsername(String email) throws UserEmailNotFoundExeption {
+        UserEntity user = userRepo.findUserByEmail(email);
+        if (user == null) {
+            throw new UserEmailNotFoundExeption("email not found" + email);
 
+        }
+        return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), Collections.emptyList());
     }
-
 }

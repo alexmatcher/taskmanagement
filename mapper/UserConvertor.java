@@ -1,5 +1,6 @@
 package effectivemobile.taskmanagementsystem.mapper;
 
+import effectivemobile.taskmanagementsystem.dto.user.UpdateUser;
 import effectivemobile.taskmanagementsystem.dto.user.User;
 import effectivemobile.taskmanagementsystem.entity.UserEntity;
 import org.modelmapper.ModelMapper;
@@ -8,24 +9,30 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class UserConvertor {
-    private ModelMapper modelMapper = new ModelMapper();
+    private final ModelMapper modelMapper = new ModelMapper();
 
     public User convertToDto(UserEntity userEntity) {
         configureModelMapper();
         if (userEntity == null) {
             return null;
         }
-        User userDto = modelMapper.map(userEntity, User.class);
-        return userDto;
+        return modelMapper.map(userEntity, User.class);
     }
 
-    public UserEntity converToEntity(User user) {
+    public UserEntity updateConvertor(UpdateUser updateUser) {
+        configureModelMapper();
+        if (updateUser == null) {
+            return null;
+        }
+        return modelMapper.map(updateUser, UserEntity.class);
+    }
+
+    public UserEntity converToEntity(Object user) {
         configureModelMapper();
         if (user == null) {
             return null;
         }
-        UserEntity userEntity = modelMapper.map(user, UserEntity.class);
-        return userEntity;
+        return modelMapper.map(user, UserEntity.class);
     }
 
     private void configureModelMapper () {

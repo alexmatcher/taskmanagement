@@ -2,13 +2,13 @@ package effectivemobile.taskmanagementsystem.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+
 import lombok.Setter;
 
 import javax.validation.constraints.Email;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
 
 @Entity
 @Table(name = "users")
@@ -49,17 +49,4 @@ public class UserEntity {
     @OneToMany(mappedBy = "user",cascade = CascadeType.ALL)
     private List<CommentsEntity> commentsEntityList = new ArrayList<>();
 
-    @Override
-    public boolean equals(Object o) {
-
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        UserEntity that = (UserEntity) o;
-        return Objects.equals(id, that.id) && Objects.equals(firstName, that.firstName) && Objects.equals(lastName, that.lastName) && Objects.equals(email, that.email) && Objects.equals(password, that.password);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, firstName, lastName, email, password);
-    }
 }

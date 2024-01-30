@@ -3,47 +3,53 @@ package effectivemobile.taskmanagementsystem.entity;
 import effectivemobile.taskmanagementsystem.dto.task.Priority;
 import effectivemobile.taskmanagementsystem.dto.task.StatusOfTask;
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Entity
-@Data
 @Table(name = "task")
 public class TaskEntity {
     public TaskEntity() {
     }
-
+    @Getter
+    @Setter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-
+    @Getter
+    @Setter
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private StatusOfTask statusOfTask;
-
+    @Getter
+    @Setter
     @Column(name = "priority")
     @Enumerated(EnumType.STRING)
     private Priority priority;
-
-
+    @Getter
+    @Setter
     @Column(name = "name")
     private String name;
-
-
-    @ManyToMany
-    @JoinTable(
-            name = "task_user",
-            joinColumns = @JoinColumn(name = "task_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private List<UserEntity> user;
-
-    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
+    @Getter
+    @Setter
+    @Column(name = "description")
+    private String description;
+    @Getter
+    @Setter
+    @Column(name = "executor")
+    private String executor;
+    @Getter
+    @Setter
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
+    @Getter
+    @Setter
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     private List<CommentsEntity> commentsEntityList = new ArrayList<>();
 
 }

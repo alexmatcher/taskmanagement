@@ -10,12 +10,11 @@ import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
-import java.util.Map;
 import java.util.function.Function;
 
 @Service
 public class JwtTokenService {
-    private static final String KEY = "cm6XNACDzEY0cNhrsUD56O9GNURwiGy3";
+
 
     public String extractUserName(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -26,10 +25,9 @@ public class JwtTokenService {
         return claimsTFunction.apply(claims);
     }
 
-    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+    public String generateToken(UserDetails userDetails) {
         return Jwts
                 .builder()
-                .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 24))
@@ -43,7 +41,7 @@ public class JwtTokenService {
     }
 
     private boolean IsTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        return extractExpiration(token).before(new Date(System.currentTimeMillis()+ 10 * 60 * 1000));
     }
 
     private Date extractExpiration(String token) {
@@ -55,12 +53,13 @@ public class JwtTokenService {
                 .parserBuilder()
                 .setSigningKey(getSingInKey())
                 .build()
-                .parseClaimsJwt(token)
+                .parseClaimsJws(token)
                 .getBody();
     }
-
     private Key getSingInKey() {
+        String KEY = "f2e9ed03291b9e10bcf8c3915f2738fab05ef7d44e808f269a66b16d07dc6d91";
         byte[] keyBytes = Decoders.BASE64.decode(KEY);
-        return Keys.hmacShaKeyFor(keyBytes);
+      return Keys.hmacShaKeyFor(keyBytes);
     }
+
 }

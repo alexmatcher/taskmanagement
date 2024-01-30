@@ -1,34 +1,40 @@
 package effectivemobile.taskmanagementsystem.controller;
 
-import effectivemobile.taskmanagementsystem.dto.auth.Register;
-import effectivemobile.taskmanagementsystem.exeptions.MailDuplicationExeption;
+import effectivemobile.taskmanagementsystem.dto.user.UpdateUser;
 import effectivemobile.taskmanagementsystem.service.impl.UserServiceImpl;
-import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/user")
 @Slf4j
+@AllArgsConstructor
 @CrossOrigin(value = "http://localhost:8080")
 public class UserController {
-    @Autowired
-    private UserServiceImpl userService;
-
-    @GetMapping("/register")
-    public ResponseEntity<?> register(@RequestBody @Validated Register register) {
-        try {
-            if (userService.registerUser(register)) {
-                return ResponseEntity.status(HttpStatus.CREATED).build();
-            }
-
-        } catch (MailDuplicationExeption e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("email is used");
-        }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-
+    private final UserServiceImpl userService;
+    @Operation(summary = "получение списока пользователей", description = "получает список имен всех пользователей", tags={ "пользователь" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized") })
+    @PostMapping("/updateUserInfo")
+    public ResponseEntity<UpdateUser> updateUserInfo(@RequestBody UpdateUser updateUser) {
+        return ResponseEntity.ok(userService.updateUserInfo(updateUser));
     }
+
+    @Operation(summary = "получение списока пользователей", description = "получает список имен всех пользователей", tags={ "пользователь" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized") })
+    @GetMapping("/getUsers")
+    private ResponseEntity<?> usersList() {
+        return ResponseEntity.ok(userService.getNamesOfAllUsers());
+    }
+
 }

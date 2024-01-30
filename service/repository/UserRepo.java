@@ -1,13 +1,13 @@
-package effectivemobile.taskmanagementsystem.repository;
+package effectivemobile.taskmanagementsystem.service.repository;
 
 import effectivemobile.taskmanagementsystem.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 public interface UserRepo extends JpaRepository<UserEntity, Integer> {
 
     UserEntity findUserById (Integer id);
-
-    boolean existsByEmail (String email);
 
     UserEntity findUserByEmail(String email);
 
